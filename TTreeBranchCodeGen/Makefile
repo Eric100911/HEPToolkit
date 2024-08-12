@@ -1,36 +1,34 @@
-# Variables: prefixes, suffixes.
-
-prefixes:=$(shell cat POs.txt)
-quantity:=$(shell cat quantities.txt)
-template:=$(shell cat templates.txt)
-tree_name:=X_One_Tree_
+# Variables: physics objects as prefixes, quantities to be added as branches.
+objects:=$(shell cat POs.txt)
+# Variables: cpp code templates, including their names.
+template_name:=$(shell cat template_list.txt)
+template_file:=$(addprefix templates/,$(addsuffix .cpp,$(template_name)))
+branched_temp:=$(addprefix branched_templates/,$(addsuffix .cpp,$(template_name)))
 
 # Declare phony targets: all clean
 .PHONY : all clean
 
 # Default target: all
-all: all_new_branch_code.cpp all_push_code.cpp all_push_fail_code.cpp
+all: $(addprefix gen_code/, $(addsuffix .cpp,$(objects)))
 
-# Generate "merged" codes [GNU Make code generated with Github Copilot]
-all_new_branch_code.cpp, $(prefixes)
-	cat $^ > $@
+# Task 1: Generate code for branches of some object __PO
+branched_templates/%.cpp: templates/%.cpp quantities.txt tree_name.txt
+	mkdir -p branched_templates
+	scripts/subst_expand.sh -i $< -w __BRANCH_NAME -p __PO_NAME_ < quantities.txt > .tmp.cpp
+	scripts/subst_expand.sh -i .tmp.cpp -w __TTREE_NAME < tree_name.txt > $@
+	rm .tmp.cpp
 
-all_push_code.cpp: $(addsuffix -push_code.cpp, $(prefixes))
-	cat $^ > $@
+# Task 1.5: Generate code for branches of all objects
+gen_code/%.cpp: $(branched_temp)
+	mkdir -p gen_code
+	cat $(branched_temp) > .tmp.cpp
+	echo $* | scripts/subst_expand.sh -i .tmp.cpp -w __PO_NAME  > $@
 
-all_push_fail_code.cpp: $(addsuffix -push_fail_code.cpp, $(prefixes))
-	cat $^ > $@
-	
-
-# branches for the physics objects ("POs")
-%-branches.txt:
-
-%-new_branch_code.cpp: %-branches.txt
-
-%-push_code.cpp: %-branches.txt
-
-%-push_fail_code.cpp: %-branches.txt
+# [TODO] Task 2: Generate code for branches of all objects by templates.
 
 
-
+# Cleaning up
 clean:
+	rm -rf branched_templates
+	rm -rf gen_code
+	rm -f .tmp.cpp 
