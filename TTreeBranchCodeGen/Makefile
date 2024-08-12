@@ -1,26 +1,35 @@
-# Variables:
-# 1. prefix - the list of prefix of the branches.
-# 2. suffix - the list of suffix of the branches.
+# Variables: prefixes, suffixes.
 
-# File Structure:
-# 1. all
-# 2. all_branch-[].txt - all branch names with the designated prefix.
-# 2. new_branch-[].txt - the "branching" code in beginJob()
-# 3. push-[].txt       - the "push_back" framework for branches.
-# 4. push_fail-[].txt  - the "push_back" code for failed fitting.
+prefixes:=$(shell cat POs.txt)
+quantity:=$(shell cat quantities.txt)
+template:=$(shell cat templates.txt)
+tree_name:=X_One_Tree_
 
-# Base files:
-# 1. quantities.txt - the list of quantities.
-
+# Declare phony targets: all clean
 .PHONY : all clean
 
-all:
+# Default target: all
+all: all_new_branch_code.cpp all_push_code.cpp all_push_fail_code.cpp
 
-new_branch-%.txt: 
+# Generate "merged" codes [GNU Make code generated with Github Copilot]
+all_new_branch_code.cpp, $(prefixes)
+	cat $^ > $@
 
-push-%.txt:
+all_push_code.cpp: $(addsuffix -push_code.cpp, $(prefixes))
+	cat $^ > $@
 
-push_fail-%.txt:
+all_push_fail_code.cpp: $(addsuffix -push_fail_code.cpp, $(prefixes))
+	cat $^ > $@
+	
+
+# branches for the physics objects ("POs")
+%-branches.txt:
+
+%-new_branch_code.cpp: %-branches.txt
+
+%-push_code.cpp: %-branches.txt
+
+%-push_fail_code.cpp: %-branches.txt
 
 
 
